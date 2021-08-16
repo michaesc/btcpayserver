@@ -8,8 +8,8 @@ namespace BTCPayServer.Client
 {
     public partial class BTCPayServerClient
     {
-        public virtual async Task<IEnumerable<LightningNetworkPaymentMethodData>>
-            GetStoreLightningNetworkPaymentMethods(string storeId, bool? enabled = null,
+        public virtual async Task<IEnumerable<LNURLPayPaymentMethodData>>
+            GetStoreLNURLPayPaymentMethods(string storeId, bool? enabled = null,
                 CancellationToken token = default)
         {
             var query = new Dictionary<string, object>();
@@ -20,40 +20,40 @@ namespace BTCPayServer.Client
 
             var response =
                 await _httpClient.SendAsync(
-                    CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LightningNetwork",
+                    CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LNURLPay",
                         query), token);
-            return await HandleResponse<IEnumerable<LightningNetworkPaymentMethodData>>(response);
+            return await HandleResponse<IEnumerable<LNURLPayPaymentMethodData>>(response);
         }
 
-        public virtual async Task<LightningNetworkPaymentMethodData> GetStoreLightningNetworkPaymentMethod(
+        public virtual async Task<LNURLPayPaymentMethodData> GetStoreLNURLPayPaymentMethod(
             string storeId,
             string cryptoCode, CancellationToken token = default)
         {
             var response =
                 await _httpClient.SendAsync(
-                    CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LightningNetwork/{cryptoCode}"), token);
-            return await HandleResponse<LightningNetworkPaymentMethodData>(response);
+                    CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LNURLPay/{cryptoCode}"), token);
+            return await HandleResponse<LNURLPayPaymentMethodData>(response);
         }
 
-        public virtual async Task RemoveStoreLightningNetworkPaymentMethod(string storeId,
+        public virtual async Task RemoveStoreLNURLPayPaymentMethod(string storeId,
             string cryptoCode, CancellationToken token = default)
         {
             var response =
                 await _httpClient.SendAsync(
-                    CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LightningNetwork/{cryptoCode}",
+                    CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LNURLPay/{cryptoCode}",
                         method: HttpMethod.Delete), token);
             await HandleResponse(response);
         }
 
-        public virtual async Task<LightningNetworkPaymentMethodData> UpdateStoreLightningNetworkPaymentMethod(
+        public virtual async Task<LNURLPayPaymentMethodData> UpdateStoreLNURLPayPaymentMethod(
             string storeId,
-            string cryptoCode, LightningNetworkPaymentMethodData paymentMethod,
+            string cryptoCode, LNURLPayPaymentMethodData paymentMethod,
             CancellationToken token = default)
         {
             var response = await _httpClient.SendAsync(
-                CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LightningNetwork/{cryptoCode}",
+                CreateHttpRequest($"api/v1/stores/{storeId}/payment-methods/LNURLPay/{cryptoCode}",
                     bodyPayload: paymentMethod, method: HttpMethod.Put), token);
-            return await HandleResponse<LightningNetworkPaymentMethodData>(response);
+            return await HandleResponse<LNURLPayPaymentMethodData>(response);
         }
     }
 }
