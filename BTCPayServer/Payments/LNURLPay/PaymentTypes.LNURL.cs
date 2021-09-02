@@ -44,7 +44,11 @@ namespace BTCPayServer.Payments
         public override object GetGreenfieldData(ISupportedPaymentMethod supportedPaymentMethod)
         {
             if (supportedPaymentMethod is LNURLPaySupportedPaymentMethod lightningSupportedPaymentMethod)
-                return new LNURLPayPaymentMethodBaseData();
+                return new LNURLPayPaymentMethodBaseData()
+                {
+                    UseBech32Scheme = lightningSupportedPaymentMethod.UseBech32Scheme,
+                    EnableForStandardInvoices = lightningSupportedPaymentMethod.EnableForStandardInvoices
+                };
             return null;
         }
 

@@ -1,11 +1,11 @@
 {
     "paths": {
-        "/api/v1/stores/{storeId}/payment-methods/LightningNetwork": {
+        "/api/v1/stores/{storeId}/payment-methods/LNURL": {
             "get": {
                 "tags": [
-                    "Store Payment Methods (Lightning Network)"
+                    "Store Payment Methods (LNURL)"
                 ],
-                "summary": "Get store Lightning Network payment methods",
+                "summary": "Get store LNURL payment methods",
                 "parameters": [
                     {
                         "name": "storeId",
@@ -26,15 +26,15 @@
                         }
                     }
                 ],
-                "description": "View information about the stores' configured Lightning Network payment methods",
-                "operationId": "StoreLightningNetworkPaymentMethods_GetLightningNetworkPaymentMethods",
+                "description": "View information about the stores' configured LNURL payment methods",
+                "operationId": "StoreLNURLPayPaymentMethods_GetLNURLPayPaymentMethods",
                 "responses": {
                     "200": {
                         "description": "list of payment methods",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/LightningNetworkPaymentMethodDataList"
+                                    "$ref": "#/components/schemas/LNURLPayPaymentMethodDataList"
                                 }
                             }
                         }
@@ -53,9 +53,9 @@
         "/api/v1/stores/{storeId}/payment-methods/LightningNetwork/{cryptoCode}": {
             "get": {
                 "tags": [
-                    "Store Payment Methods (Lightning Network)"
+                    "Store Payment Methods (LNURL Pay)"
                 ],
-                "summary": "Get store Lightning Network payment method",
+                "summary": "Get store LNURL Pay payment method",
                 "parameters": [
                     {
                         "name": "storeId",
@@ -77,14 +77,14 @@
                     }
                 ],
                 "description": "View information about the specified payment method",
-                "operationId": "StoreLightningNetworkPaymentMethods_GetLightningNetworkPaymentMethod",
+                "operationId": "StoreLNURLPayPaymentMethods_GetLNURLPayPaymentMethod",
                 "responses": {
                     "200": {
                         "description": "specified payment method",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/LightningNetworkPaymentMethodData"
+                                    "$ref": "#/components/schemas/LNURLPayPaymentMethodData"
                                 }
                             }
                         }
@@ -107,9 +107,9 @@
             },
             "put": {
                 "tags": [
-                    "Store Payment Methods (Lightning Network)"
+                    "Store Payment Methods (LNURL Pay)"
                 ],
-                "summary": "Update store Lightning Network payment method",
+                "summary": "Update store LNURL Pay payment method",
                 "parameters": [
                     {
                         "name": "storeId",
@@ -136,21 +136,21 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UpdateLightningNetworkPaymentMethodRequest"
+                                "$ref": "#/components/schemas/LNURLPayPaymentMethodData"
                             }
                         }
                     },
                     "required": true,
                     "x-position": 1
                 },
-                "operationId": "StoreLightningNetworkPaymentMethods_UpdateLightningNetworkPaymentMethod",
+                "operationId": "StoreLNURLPayPaymentMethods_UpdateLNURLPayPaymentMethod",
                 "responses": {
                     "200": {
                         "description": "updated specified payment method",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/LightningNetworkPaymentMethodData"
+                                    "$ref": "#/components/schemas/LNURLPayPaymentMethodData"
                                 }
                             }
                         }
@@ -183,9 +183,9 @@
             },
             "delete": {
                 "tags": [
-                    "Store Payment Methods (Lightning Network)"
+                    "Store Payment Methods (LNURL Pay)"
                 ],
-                "summary": "Remove store Lightning Network payment method",
+                "summary": "Remove store LNURL Pay payment method",
                 "parameters": [
                     {
                         "name": "storeId",
@@ -241,53 +241,39 @@
     },
     "components": {
         "schemas": {
-            "LightningNetworkPaymentMethodDataList": {
+            "LNURLPayPaymentMethodDataList": {
                 "type": "array",
                 "items": {
-                    "$ref": "#/components/schemas/LightningNetworkPaymentMethodData"
+                    "$ref": "#/components/schemas/LNURLPayPaymentMethodData"
                 }
             },
-            "LightningNetworkPaymentMethodBaseData": {
+            "LNURLPayPaymentMethodBaseData": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                    "connectionString": {
-                        "type": "string",
-                        "description": "The lightning connection string. Set to 'Internal Node' to use the internal node. (See [this doc](https://github.com/btcpayserver/BTCPayServer.Lightning/blob/master/README.md#examples) for some example)",
-                        "example": "type=clightning;server=..."
+                    "useBech32Scheme": {
+                        "type": "boolean",
+                        "description": "Whether to use [LUD-01](https://github.com/fiatjaf/lnurl-rfc/blob/luds/01.md)'s bech32 format or to use [LUD-17](https://github.com/fiatjaf/lnurl-rfc/blob/luds/17.md) url formatting. "
                     },
-                    "disableBOLT11PaymentOption": {
-
-                        "type": "boolean", 
-                        "description": "Whether to disable generation of bolt11 invoices. Useful when wanting to only use LNURL Pay exclusively."
+                    "enableForStandardInvoices": {
+                        "type": "boolean",
+                        "description": "Whether to allow this payment method to also be used for standard invoices and not just topup invoices."
                     }
                 }
             },
-            "LightningNetworkPaymentMethodData": {
+            "LNURLPayPaymentMethodData": {
                 "type": "object",
                 "additionalProperties": {
-                    "$ref": "#/components/schemas/LightningNetworkPaymentMethodBaseData"
+                    "$ref": "#/components/schemas/LNURLPayPaymentMethodBaseData"
                 },
                 "properties": {
                     "enabled": {
                         "type": "boolean",
-                        "description": "Whether the payment method is enabled"
+                        "description": "Whether the payment method is enabled. Note that this can only enabled when a Lightning Network payment method is available and enabled"
                     },
                     "cryptoCode": {
                         "type": "string",
                         "description": "Crypto code of the payment method"
-                    }
-                }
-            },
-            "UpdateLightningNetworkPaymentMethodRequest": {
-                "type": "object",
-                "additionalProperties": {
-                    "$ref": "#/components/schemas/LightningNetworkPaymentMethodBaseData"
-                },
-                "properties": {
-                    "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the payment method is enabled"
                     }
                 }
             }
@@ -295,7 +281,7 @@
     },
     "tags": [
         {
-            "name": "Store Payment Methods (Lightning Network)"
+            "name": "Store Payment Methods (LNURL Pay)"
         }
     ]
 }
