@@ -180,7 +180,8 @@ namespace BTCPayServer
         }
 
         [HttpGet("pay")]
-        public async Task<IActionResult> GetLNURL(string cryptoCode, string storeId, string currencyCode = null, decimal? min = null, decimal? max = null, string username = null)
+        public async Task<IActionResult> GetLNURL(string cryptoCode, string storeId, string currencyCode = null,
+            decimal? min = null, decimal? max = null, string username = null)
         {
             currencyCode ??= cryptoCode;
             var network = _btcPayNetworkProvider.GetNetwork<BTCPayNetwork>(cryptoCode);
@@ -198,7 +199,8 @@ namespace BTCPayServer
             var pmi = new PaymentMethodId(cryptoCode, PaymentTypes.LNURLPay);
             var lnpmi = new PaymentMethodId(cryptoCode, PaymentTypes.LightningLike);
             var methods = store.GetSupportedPaymentMethods(_btcPayNetworkProvider);
-            var lnUrlMethod = methods.FirstOrDefault(method => method.PaymentId == pmi) as LNURLPaySupportedPaymentMethod;
+            var lnUrlMethod =
+                methods.FirstOrDefault(method => method.PaymentId == pmi) as LNURLPaySupportedPaymentMethod;
             var lnMethod = methods.FirstOrDefault(method => method.PaymentId == lnpmi);
             if (lnUrlMethod is null || lnMethod is null)
             {
@@ -230,15 +232,15 @@ namespace BTCPayServer
             if (!string.IsNullOrEmpty(username))
             {
                 var pm = i.GetPaymentMethod(pmi);
-                var paymentMethodDetails = (LNURLPayPaymentMethodDetails) pm.GetPaymentMethodDetails();
+                var paymentMethodDetails = (LNURLPayPaymentMethodDetails)pm.GetPaymentMethodDetails();
                 paymentMethodDetails.ConsumedLightningAddress = lnAddress;
                 await _invoiceRepository.NewPaymentDetails(i.Id, paymentMethodDetails, network);
             }
-            
+
             lnurlMetadata.Add(new[] { "text/plain", i.Id });
             if (!string.IsNullOrEmpty(username))
             {
-                lnurlMetadata.Add( new[] { "text/identifier", lnAddress  });
+                lnurlMetadata.Add(new[] { "text/identifier", lnAddress });
             }
 
             return Ok(new LNURLPayRequest()
@@ -291,11 +293,11 @@ namespace BTCPayServer
                 var max = isTopup ? LightMoney.FromUnit(6.12m, LightMoneyUnit.BTC) : min;
 
                 List<string[]> lnurlMetadata = new List<string[]>();
-                 
+
                 lnurlMetadata.Add(new[] { "text/plain", i.Id });
                 if (!string.IsNullOrEmpty(paymentMethodDetails.ConsumedLightningAddress))
                 {
-                    lnurlMetadata.Add( new[] { "text/identifier", paymentMethodDetails.ConsumedLightningAddress  });
+                    lnurlMetadata.Add(new[] { "text/identifier", paymentMethodDetails.ConsumedLightningAddress });
                 }
 
                 var metadata = JsonConvert.SerializeObject(lnurlMetadata);
@@ -358,6 +360,7 @@ namespace BTCPayServer
                     {
                         paymentMethodDetails.ProvidedComment = comment;
                     }
+
                     lightningPaymentMethod.SetPaymentMethodDetails(paymentMethodDetails);
                     await _invoiceRepository.UpdateInvoicePaymentMethod(invoiceId, lightningPaymentMethod);
 
@@ -372,7 +375,7 @@ namespace BTCPayServer
 
                 if (amount.HasValue && paymentMethodDetails.GeneratedBoltAmount == amount)
                 {
-                    if (lnurlSupportedPaymentMethod.LUD12Enabled && paymentMethodDetails.ProvidedComment != comment )
+                    if (lnurlSupportedPaymentMethod.LUD12Enabled && paymentMethodDetails.ProvidedComment != comment)
                     {
                         paymentMethodDetails.ProvidedComment = comment;
                         lightningPaymentMethod.SetPaymentMethodDetails(paymentMethodDetails);
@@ -392,7 +395,7 @@ namespace BTCPayServer
                         Tag = "payRequest",
                         MinSendable = min,
                         MaxSendable = max,
-                        CommentAllowed = lnurlSupportedPaymentMethod.LUD12Enabled? 2000: 0,
+                        CommentAllowed = lnurlSupportedPaymentMethod.LUD12Enabled ? 2000 : 0,
                         Metadata = metadata,
                         Callback = new Uri(this.Request.GetCurrentUrl())
                     });
@@ -444,17 +447,13 @@ namespace BTCPayServer
         public async Task<IActionResult> EditLightningAddress(string storeId, [FromForm] EditLightningAddressVM vm,
             string command)
         {
-            for (var i = 0; i < vm.Items.Count; i++)
+            if (command.StartsWith("remove", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (_lightningAddressSettings.Items.TryGetValue(vm.Items[i].Username.ToLowerInvariant(),
-                    out var existing) && existing.StoreId != storeId)
-                {
-                    ModelState.AddModelError(dictionary => vm.Items[i].Username, "Username is already taken", this);
-                }
-            }
-
-            if (!ModelState.IsValid)
-            {
+                ModelState.Clear();
+                var index = int.Parse(
+                    command.Substring(command.IndexOf(":", StringComparison.InvariantCultureIgnoreCase) + 1),
+                    CultureInfo.InvariantCulture);
+                vm.Items.RemoveAt(index);
                 return View(vm);
             }
 
@@ -464,13 +463,20 @@ namespace BTCPayServer
                 return View(vm);
             }
 
-            if (command.StartsWith("remove", StringComparison.InvariantCultureIgnoreCase))
+            if (vm.Items?.Any() is true)
             {
-                ModelState.Clear();
-                var index = int.Parse(
-                    command.Substring(command.IndexOf(":", StringComparison.InvariantCultureIgnoreCase) + 1),
-                    CultureInfo.InvariantCulture);
-                vm.Items.RemoveAt(index);
+                for (var i = 0; i < vm.Items.Count; i++)
+                {
+                    if (_lightningAddressSettings.Items.TryGetValue(vm.Items[i].Username.ToLowerInvariant(),
+                        out var existing) && existing.StoreId != storeId)
+                    {
+                        ModelState.AddModelError(dictionary => vm.Items[i].Username, "Username is already taken", this);
+                    }
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
                 return View(vm);
             }
 
