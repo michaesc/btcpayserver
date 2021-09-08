@@ -109,7 +109,8 @@ namespace BTCPayServer.Controllers
                     {
                         CryptoCode = vm.CryptoCode, 
                         EnableForStandardInvoices = vm.LNURLStandardInvoiceEnabled,
-                        UseBech32Scheme = vm.LNURLBech32Mode
+                        UseBech32Scheme = vm.LNURLBech32Mode,
+                        LUD12Enabled = vm.LUD12Enabled
                     });
                     
                     store.SetStoreBlob(storeBlob);
@@ -199,7 +200,7 @@ namespace BTCPayServer.Controllers
                 vm.LNURLEnabled = true;
                 vm.LNURLBech32Mode = lnurl.UseBech32Scheme;
                 vm.LNURLStandardInvoiceEnabled = lnurl.EnableForStandardInvoices;
-                
+                vm.LUD12Enabled = lnurl.LUD12Enabled;
             }
             else
             {

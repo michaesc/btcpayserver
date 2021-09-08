@@ -46,6 +46,8 @@ namespace BTCPayServer.Models.InvoicingModels
             public string Overpaid { get; set; }
             [JsonIgnore]
             public PaymentMethodId PaymentMethodId { get; set; }
+
+            public PaymentMethod PaymentMethodRaw { get; set; }
         }
         public class AddressModel
         {

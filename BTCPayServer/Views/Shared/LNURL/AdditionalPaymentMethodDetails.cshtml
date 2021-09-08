@@ -1,0 +1,17 @@
+﻿@model BTCPayServer.Payments.LNURLPayPaymentMethodDetails
+<tr>
+    @if (!string.IsNullOrEmpty(Model.ProvidedComment))
+    {
+        <td colspan="100% bg-tile">
+
+            LNURL Comment: @Model.ProvidedComment
+        </td>
+    }
+    @if (!string.IsNullOrEmpty(Model.ConsumedLightningAddress))
+    {
+        <td colspan="100% bg-tile">
+
+            Lightning address used: @Model.ConsumedLightningAddress
+        </td>
+    }
+</tr>

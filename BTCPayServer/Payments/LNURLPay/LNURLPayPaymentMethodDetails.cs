@@ -14,9 +14,22 @@ namespace BTCPayServer.Payments
         public string BTCPayInvoiceId { get; set; }
         public bool Bech32Mode { get; set; }
 
+        public string ProvidedComment { get; set; }
+        public string? ConsumedLightningAddress { get; set; }
+
         public override PaymentType GetPaymentType()
         {
             return LNURLPayPaymentType.Instance;
+        }
+
+        public override string GetAdditionalDataPartialName()
+        {
+            if (string.IsNullOrEmpty(ProvidedComment) && string.IsNullOrEmpty(ConsumedLightningAddress))
+            {
+                return null;
+            }
+
+            return "LNURL/AdditionalPaymentMethodDetails";
         }
     }
 }

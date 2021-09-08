@@ -68,7 +68,8 @@
     }
     #LNURLEnabled:checked + * ,
     #LNURLEnabled:checked + * + *,
-    #LNURLEnabled:checked + * + * + *{
+    #LNURLEnabled:checked + * + * + *,
+    #LNURLEnabled:checked + * + * + * + *{
         display:  block;
     }
 </style>
@@ -202,6 +203,10 @@
         <div class="form-group mt-4 lnurl-setup DisableBolt11PaymentMethod">
             <label asp-for="DisableBolt11PaymentMethod" >Do not offer BOLT11 for standard invoices</label>
             <input type="checkbox" asp-for="DisableBolt11PaymentMethod" class="btcpay-toggle ml-2"/>
+        </div>
+        <div class="form-group mt-4 lnurl-setup">
+            <label asp-for="LUD12Enabled" >Allow payee to pass a comment</label>
+            <input type="checkbox" asp-for="LUD12Enabled" class="btcpay-toggle ml-2"/>
         </div>
     </div>
 

@@ -35,5 +35,10 @@ namespace BTCPayServer.Payments.Lightning
             return 0.0m;
         }
         public bool Activated { get; set; }
+
+        public virtual string GetAdditionalDataPartialName()
+        {
+            return null;
+        }
     }
 }
