@@ -7,19 +7,33 @@
     ViewData.SetActivePageAndTitle(StoreNavPages.Integrations, "Lightning Address Setup", Context.GetStoreData().StoreName);
 }
 <form asp-action="EditLightningAddress" method="post">
-<h2 class="mb-4">@ViewData["PageTitle"]</h2>
+    <h2 class="mb-4">@ViewData["PageTitle"]</h2>
 
     <div class="row">
         <div class="list-group list-group-flush mb-2">
             @for (var index = 0; index < Model.Items.Count; index++)
             {
-                <div class="list-group-item px-0 pt-3">
+                <div class="list-group-item  pt-3 bg-tile">
                     <div class="row">
-                        <div class="col-12 col-lg-8">
+                        <div class="col-12 col-lg-10">
                             <div class="form-group">
-                                <label asp-for="Items[index].Username" c class="form-label"></label>
+                                <label asp-for="Items[index].Username" class="form-label"></label>
                                 <input asp-for="Items[index].Username" class="form-control"/>
                                 <span asp-validation-for="Items[index].Username" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Items[index].CurrencyCode" class="form-label">Invoice currency</label>
+                                <input asp-for="Items[index].CurrencyCode" class="form-control"/>
+                                <span asp-validation-for="Items[index].CurrencyCode" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                  <span class="input-group-text">min/max (sats)</span>
+                                  <input type="number" min="1" asp-for="Items[index].Min" class="form-control">
+                                  <input type="number" min="1" asp-for="Items[index].Max" class="form-control">
+                                </div>
+                                <span asp-validation-for="Items[index].Min" class="text-danger"></span>
+                                <span asp-validation-for="Items[index].Max" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-12 col-lg-2 pull-right">
@@ -38,12 +52,12 @@
         </div>
     </div>
     <div class="row">
-         <div class="btn-group">
-                
+        <div class="btn-group">
+
             <button type="submit" name="command" value="add" class="btn btn-secondary btn-sm ms-2">Add address</button>
-            
+
             <button type="submit" name="command" value="save" class="btn btn-secondary btn-sm ms-2">Save</button>
-            
-            </div>
+
+        </div>
     </div>
 </form>

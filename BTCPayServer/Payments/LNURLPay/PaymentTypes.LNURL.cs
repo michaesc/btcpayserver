@@ -40,7 +40,7 @@ namespace BTCPayServer.Payments
             return LNURL.LNURL.EncodeUri(uri, "payRequest", lnurlPaymentMethodDetails.Bech32Mode).ToString();
         }
 
-        public override string InvoiceViewPaymentPartialName { get; } = "LNURLPay/ViewLNURLPayPaymentData";
+        public override string InvoiceViewPaymentPartialName { get; } = "Lightning/ViewLightningLikePaymentData";
         public override object GetGreenfieldData(ISupportedPaymentMethod supportedPaymentMethod)
         {
             if (supportedPaymentMethod is LNURLPaySupportedPaymentMethod lightningSupportedPaymentMethod)

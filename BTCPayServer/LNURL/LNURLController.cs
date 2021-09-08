@@ -234,7 +234,8 @@ namespace BTCPayServer
                 var pm = i.GetPaymentMethod(pmi);
                 var paymentMethodDetails = (LNURLPayPaymentMethodDetails)pm.GetPaymentMethodDetails();
                 paymentMethodDetails.ConsumedLightningAddress = lnAddress;
-                await _invoiceRepository.NewPaymentDetails(i.Id, paymentMethodDetails, network);
+                pm.SetPaymentMethodDetails(paymentMethodDetails);
+                await _invoiceRepository.UpdateInvoicePaymentMethod(i.Id, pm);
             }
 
             lnurlMetadata.Add(new[] { "text/plain", i.Id });
@@ -415,7 +416,15 @@ namespace BTCPayServer
         public async Task<IActionResult> EditLightningAddress(string storeId)
         {
             var store = Request.HttpContext.GetStoreData();
-
+            var storeBlob = store.GetStoreBlob();
+            if (!storeBlob.AnyoneCanInvoice)
+            {
+                TempData.SetStatusMessageModel(new StatusMessageModel()
+                {
+                    Severity = StatusMessageModel.StatusSeverity.Error,
+                    Message = "You must enable \"Allow anyone to create invoice\" for lightning addresses to work."
+                });
+            }
             if (_lightningAddressSettings.StoreToItemMap.TryGetValue(storeId, out var addresses))
             {
                 return View(new EditLightningAddressVM()
@@ -467,6 +476,10 @@ namespace BTCPayServer
             {
                 for (var i = 0; i < vm.Items.Count; i++)
                 {
+                    if (vm.Items[i].Username is null)
+                    {
+                        continue;
+                    }
                     if (_lightningAddressSettings.Items.TryGetValue(vm.Items[i].Username.ToLowerInvariant(),
                         out var existing) && existing.StoreId != storeId)
                     {
