@@ -14,9 +14,11 @@ using BTCPayServer.Client.Models;
 using BTCPayServer.Controllers;
 using BTCPayServer.Data;
 using BTCPayServer.Lightning;
+using BTCPayServer.Models.AppViewModels;
 using BTCPayServer.Payments;
 using BTCPayServer.Payments.Lightning;
 using BTCPayServer.Services;
+using BTCPayServer.Services.Apps;
 using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 using LNURL;
@@ -37,6 +39,7 @@ namespace BTCPayServer
         private readonly BTCPayNetworkProvider _btcPayNetworkProvider;
         private readonly LightningLikePaymentHandler _lightningLikePaymentHandler;
         private readonly StoreRepository _storeRepository;
+        private readonly AppService _appService;
         private readonly InvoiceController _invoiceController;
         private static LightningAddressSettings _lightningAddressSettings;
         private readonly SettingsRepository _settingsRepository;
@@ -46,97 +49,96 @@ namespace BTCPayServer
             BTCPayNetworkProvider btcPayNetworkProvider,
             LightningLikePaymentHandler lightningLikePaymentHandler,
             StoreRepository storeRepository,
-            InvoiceController invoiceController, SettingsRepository settingsRepository)
+            AppService appService,
+            InvoiceController invoiceController,
+            SettingsRepository settingsRepository)
         {
             _invoiceRepository = invoiceRepository;
             _eventAggregator = eventAggregator;
             _btcPayNetworkProvider = btcPayNetworkProvider;
             _lightningLikePaymentHandler = lightningLikePaymentHandler;
             _storeRepository = storeRepository;
+            _appService = appService;
             _invoiceController = invoiceController;
             _settingsRepository = settingsRepository;
             _lightningAddressSettings = settingsRepository.GetSettingAsync<LightningAddressSettings>().Result ??
                                         new LightningAddressSettings();
         }
 
-        //
-        // [HttpGet("pay/app/{appId}")]
-        // public async Task<IActionResult> GetLNURLForApp(string cryptoCode, string appId, string itemCode = null,
-        //     long? amount = null)
-        // {
-        //     var network = _btcPayNetworkProvider.GetNetwork<BTCPayNetwork>(cryptoCode);
-        //     if (network is null || !network.SupportLightning)
-        //     {
-        //         return NotFound();
-        //     }
-        //
-        //     var app = await _appService.GetApp(appId, null, true);
-        //     if (app is null)
-        //     {
-        //         return NotFound();
-        //     }
-        //
-        //     var store = app.StoreData;
-        //     if (store is null)
-        //     {
-        //         return NotFound();
-        //     }
-        //
-        //     var pmi = new PaymentMethodId(cryptoCode, PaymentTypes.LNURLPay);
-        //     var lnpmi = new PaymentMethodId(cryptoCode, PaymentTypes.LightningLike);
-        //     var methods = store.GetSupportedPaymentMethods(_btcPayNetworkProvider);
-        //     var lnUrlMethod = methods.FirstOrDefault(method => method.PaymentId == pmi);
-        //     var lnMethod = methods.FirstOrDefault(method => method.PaymentId == lnpmi);
-        //     if (lnUrlMethod is null || lnMethod is null)
-        //     {
-        //         return NotFound();
-        //     }
-        //
-        //     ViewPointOfSaleViewModel.Item[] items = new ViewPointOfSaleViewModel.Item[] { };
-        //     string currencyCode;
-        //     switch (app.AppType)
-        //     {
-        //         case nameof(AppType.Crowdfund):
-        //             var cfS = app.GetSettings<CrowdfundSettings>();
-        //             currencyCode = cfS.TargetCurrency;
-        //             items = _appService.Parse(cfS.PerksTemplate, cfS.TargetCurrency);
-        //             if (string.IsNullOrEmpty(itemCode))
-        //             {
-        //                 return NotFound();
-        //             }
-        //             break;
-        //         case nameof(AppType.PointOfSale):
-        //             var posS = app.GetSettings<AppsController.PointOfSaleSettings>();
-        //             currencyCode = posS.Currency;
-        //             items = _appService.Parse(posS.Template, posS.Currency);
-        //             if (string.IsNullOrEmpty(itemCode) && !posS.ShowCustomAmount)
-        //             {
-        //                 return NotFound();
-        //             }
-        //             break;
-        //     }
-        //
-        //     var item = items.FirstOrDefault(item1 =>
-        //         item1.Id.Equals(itemCode, StringComparison.InvariantCultureIgnoreCase));
-        //     if (!string.IsNullOrEmpty(itemCode) && item is null )
-        //     {
-        //         return NotFound();
-        //     }
-        //     else
-        //     {
-        //         return Ok(new LNURLPayRequest()
-        //         {
-        //             Tag = "payRequest",
-        //             MinSendable = new LightMoney(1m, LightMoneyUnit.Satoshi),
-        //             MaxSendable = LightMoney.FromUnit(6.12m, LightMoneyUnit.BTC),
-        //             CommentAllowed = 0,
-        //             Metadata = metadata,
-        //             Callback = new Uri(Url.ActionLink(nameof(GetLNURLForInvoice), "LNURL",
-        //                 new { cryptoCode, invoiceId = i.Id }, Request.Scheme, Request.Host.ToString(),
-        //                 Request.PathBase))
-        //         });
-        //     }
-        // }
+
+        [HttpGet("pay/app/{appId}/{itemCode}")]
+        public async Task<IActionResult> GetLNURLForApp(string cryptoCode, string appId, string itemCode = null)
+        {
+            var network = _btcPayNetworkProvider.GetNetwork<BTCPayNetwork>(cryptoCode);
+            if (network is null || !network.SupportLightning)
+            {
+                return NotFound();
+            }
+
+            var app = await _appService.GetApp(appId, null, true);
+            if (app is null)
+            {
+                return NotFound();
+            }
+
+            var store = app.StoreData;
+            if (store is null)
+            {
+                return NotFound();
+            }
+            if (string.IsNullOrEmpty(itemCode))
+            {
+                return NotFound();
+            }
+            var pmi = new PaymentMethodId(cryptoCode, PaymentTypes.LNURLPay);
+            var lnpmi = new PaymentMethodId(cryptoCode, PaymentTypes.LightningLike);
+            var methods = store.GetSupportedPaymentMethods(_btcPayNetworkProvider);
+            var lnUrlMethod =
+                methods.FirstOrDefault(method => method.PaymentId == pmi) as LNURLPaySupportedPaymentMethod;
+            var lnMethod = methods.FirstOrDefault(method => method.PaymentId == lnpmi);
+            if (lnUrlMethod is null || lnMethod is null)
+            {
+                return NotFound();
+            }
+
+            ViewPointOfSaleViewModel.Item[] items = new ViewPointOfSaleViewModel.Item[] { };
+            string currencyCode = null;
+            switch (app.AppType)
+            {
+                case nameof(AppType.Crowdfund):
+                    var cfS = app.GetSettings<CrowdfundSettings>();
+                    currencyCode = cfS.TargetCurrency;
+                    items = _appService.Parse(cfS.PerksTemplate, cfS.TargetCurrency);
+                    // if (string.IsNullOrEmpty(itemCode))
+                    // {
+                    //     return NotFound();
+                    // }
+
+                    break;
+                case nameof(AppType.PointOfSale):
+                    var posS = app.GetSettings<AppsController.PointOfSaleSettings>();
+                    currencyCode = posS.Currency;
+                    items = _appService.Parse(posS.Template, posS.Currency);
+                    // if (string.IsNullOrEmpty(itemCode) && !posS.ShowCustomAmount)
+                    // {
+                    //     return NotFound();
+                    // }
+
+                    break;
+            }
+
+            var item = items.FirstOrDefault(item1 =>
+                item1.Id.Equals(itemCode, StringComparison.InvariantCultureIgnoreCase));
+            if (item is null ||
+                item.Inventory <= 0 ||
+                (item.PaymentMethods?.Any() is true &&
+                 item.PaymentMethods?.Any(s => PaymentMethodId.Parse(s) == pmi) is false))
+            {
+                return NotFound();
+            }
+
+            return await GetLNURL(cryptoCode, app.StoreDataId, currencyCode, null, null, () => (null, new List<string>() { AppService.GetAppInternalTag(appId)}, item.Price.Value));
+        }
 
         public class EditLightningAddressVM
         {
@@ -169,19 +171,20 @@ namespace BTCPayServer
         }
 
         [HttpGet("~/.well-known/lnurlp/{username}")]
-        public async Task<IActionResult> ResolveLightningAddress(string cryptoCode, string username)
+        public async Task<IActionResult> ResolveLightningAddress( string username)
         {
             if (!_lightningAddressSettings.Items.TryGetValue(username.ToLowerInvariant(), out var item))
             {
                 return NotFound();
             }
 
-            return await GetLNURL(item.CryptoCode, item.StoreId, item.CurrencyCode, item.Min, item.Max, username);
+            return await GetLNURL(item.CryptoCode, item.StoreId, item.CurrencyCode, item.Min, item.Max, () => (username, null, null));
         }
 
         [HttpGet("pay")]
         public async Task<IActionResult> GetLNURL(string cryptoCode, string storeId, string currencyCode = null,
-            decimal? min = null, decimal? max = null, string username = null)
+            decimal? min = null, decimal? max = null,
+            Func<(string username, List<string> additionalTags, decimal? invoiceAmount)> internalDetails = null)
         {
             currencyCode ??= cryptoCode;
             var network = _btcPayNetworkProvider.GetNetwork<BTCPayNetwork>(cryptoCode);
@@ -214,21 +217,26 @@ namespace BTCPayServer
                 return NotFound();
             }
 
+            (string username, List<string> additionalTags, decimal? invoiceAmount) = internalDetails();
+
             var lnAddress = username is null ? null : $"{username}@{Request.Host.ToString()}";
             List<string[]> lnurlMetadata = new List<string[]>();
 
             var i = await _invoiceController.CreateInvoiceCoreRaw(
                 new CreateInvoiceRequest()
                 {
-                    Amount = null,
+                    Amount = invoiceAmount,
                     Checkout = new InvoiceDataBase.CheckoutOptions()
                     {
                         PaymentMethods = new[] { pmi.ToStringNormalized() },
                     },
                     Currency = currencyCode,
-                    Type = InvoiceType.TopUp,
-                }, store, Request.GetAbsoluteUri(""));
-
+                    Type = invoiceAmount is null ? InvoiceType.TopUp : InvoiceType.Standard,
+                }, store, Request.GetAbsoluteUri(""), additionalTags);
+            if (i.Type != InvoiceType.TopUp)
+            {
+                min = i.GetPaymentMethod(pmi).Calculate().Due.ToDecimal(MoneyUnit.Satoshi);
+            }
             if (!string.IsNullOrEmpty(username))
             {
                 var pm = i.GetPaymentMethod(pmi);
@@ -248,7 +256,7 @@ namespace BTCPayServer
             {
                 Tag = "payRequest",
                 MinSendable = new LightMoney(min ?? 1m, LightMoneyUnit.Satoshi),
-                MaxSendable = LightMoney.FromUnit(max ?? 6.12m, LightMoneyUnit.BTC),
+                MaxSendable = max is null? LightMoney.FromUnit( 6.12m, LightMoneyUnit.BTC): new LightMoney(max.Value, LightMoneyUnit.Satoshi),
                 CommentAllowed = lnUrlMethod.LUD12Enabled ? 2000 : 0,
                 Metadata = JsonConvert.SerializeObject(lnurlMetadata),
                 Callback = new Uri(Url.ActionLink(nameof(GetLNURLForInvoice), "LNURL",
@@ -425,6 +433,7 @@ namespace BTCPayServer
                     Message = "You must enable \"Allow anyone to create invoice\" for lightning addresses to work."
                 });
             }
+
             if (_lightningAddressSettings.StoreToItemMap.TryGetValue(storeId, out var addresses))
             {
                 return View(new EditLightningAddressVM()
@@ -480,6 +489,7 @@ namespace BTCPayServer
                     {
                         continue;
                     }
+
                     if (_lightningAddressSettings.Items.TryGetValue(vm.Items[i].Username.ToLowerInvariant(),
                         out var existing) && existing.StoreId != storeId)
                     {
