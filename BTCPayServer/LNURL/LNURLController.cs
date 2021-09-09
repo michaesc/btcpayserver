@@ -236,6 +236,7 @@ namespace BTCPayServer
             if (i.Type != InvoiceType.TopUp)
             {
                 min = i.GetPaymentMethod(pmi).Calculate().Due.ToDecimal(MoneyUnit.Satoshi);
+                max = min;
             }
             if (!string.IsNullOrEmpty(username))
             {
