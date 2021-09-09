@@ -6,7 +6,6 @@
     Layout = "_LayoutPos";
     var anyInventoryItems = Model.Items.Any(item => item.Inventory.HasValue);
     var lnurl = Context.Request.Query.ContainsKey("lnurl");
-    
 }
 
 <div class="container d-flex h-100">
@@ -63,9 +62,7 @@
                                     appid = Model.AppId,
                                     ItemCode = item.Id
                                 }, Context.Request.Scheme, Context.Request.Host.ToString()));
-                                <vc:qr-code data="@LNURL.EncodeBech32(ccc)"></vc:qr-code>
-                                <input type="text" value="@LNURL.EncodeUri(ccc,"payRequest", true)"/>
-                                <input type="text" value="@LNURL.EncodeUri(ccc,"payRequest", false)"/>
+                                <vc:qr-code data="@LNURL.EncodeBech32(ccc).ToUpperInvariant()"></vc:qr-code>
                             }
                             
                             
